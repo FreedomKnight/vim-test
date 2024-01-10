@@ -22,7 +22,7 @@ function! test#go#gotest#build_position(type, position) abort
         if !empty(suite_name) 
           let suite_testcase_name = s:get_suite_testcase_name(suite_name)
           let name = s:nearest_test(a:position)
-          return empty(name) ? [] : [path, '-run '.shellescape(suite_testcase_name.'$') . ' -testify.m ' .shellescape(name, 1)]
+          return empty(name) ? [] : [path, '-run '.shellescape(suite_testcase_name.'$'), '-testify.m ' .shellescape(name, 1)]
         endif
       endif
       let name = s:nearest_test(a:position)
@@ -80,21 +80,26 @@ endfunction
 function! s:get_suite_testcase_name(suite_name) abort
   let current_line = 1
   let current_testcase_name = ""
-  let s:original_testcase_pattern = '\v^\s*func ((Test|Example).*)\(.*testing\.T'
   for line in getline(1, "$")
       let testcase_matched = matchlist(line, s:original_testcase_pattern)
       if len(testcase_matched) > 1
           let current_testcase_name = filter(testcase_matched, '!empty(v:val)')[1]
           " check if suite is in this testcase
+          let suite_run_detected = 0
           for line in getline(current_line + 1, "$")
               let current_testcase_run_suite_matched = matchlist(line, '.*'. a:suite_name.'.*')
-              let another_testcase_matched = matchlist(line, s:original_testcase_pattern)
+              let suite_run_matched = matchstr(line, '\v\w*\.Run\s*\(.*')
+              if len(suite_run_matched) > 0
+                let suite_run_detected = 1
+              endif 
 
-              if len(another_testcase_matched) > 1
+              " dectect next function and exclude lambda function
+              let next_function_reached = matchstr(line, '\v^\s*func\s*(\(.*\))?\s*\w+\s*\(')
+              if len(next_function_reached) > 0
                   break
               endif 
 
-              if (len(current_testcase_run_suite_matched) > 0)
+              if len(current_testcase_run_suite_matched) > 0 && suite_run_detected == 1
                   return current_testcase_name
               endif
           endfor

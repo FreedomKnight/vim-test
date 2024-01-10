@@ -6,6 +6,9 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+func TestAnotherOriginalTestcase(t *testing.T) {
+}
+
 type ExampleSuite struct {
 	suite.Suite
 }
@@ -17,6 +20,8 @@ type AnotherSuite struct {
 func (s *ExampleSuite) TestList() {
 	a := []int{1, 2, 3}
 	s.NotEmpty(a)
+	func() {
+	}()
 }
 
 func (s *AnotherSuite) TestAnother() {
